@@ -166,6 +166,6 @@ val initialRules = Rules.Colors.fromString("""
 )
 
 val initialData = Tiles(
-    List(32 * 32) { Black },
+    Black,
     listOf(32, 32)
 )

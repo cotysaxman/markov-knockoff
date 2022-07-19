@@ -2,8 +2,16 @@ import kotlin.math.pow
 
 data class Tiles<T>(
     private val data: List<T>,
-    private val edges: List<Int>
+    private val edges: List<Int> = listOf(data.size)
 ): Sequence<Tiles<T>> {
+    constructor(
+        default: T,
+        edges: List<Int>
+    ) : this(
+        List(edges.reduce(Int::times)) { default },
+        edges
+    )
+
     private val dimensions = edges.size
 
     val value = data[0]
