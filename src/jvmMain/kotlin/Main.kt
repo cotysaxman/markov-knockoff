@@ -87,8 +87,8 @@ fun App(
                 verticalArrangement = Arrangement.Center
             ) {
                 val (tileWidth, tileHeight) = with (this@BoxWithConstraints) {
-                    val heightScalar = 1f / data.size(0)
-                    val widthScalar = 1f / data.size(1)
+                    val heightScalar = 1f / data.sizeInDimension(1)
+                    val widthScalar = 1f / data.sizeInDimension(2)
 
                     (maxWidth * widthScalar) to (maxHeight * heightScalar)
                 }

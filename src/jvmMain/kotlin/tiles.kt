@@ -35,7 +35,10 @@ data class Tiles<T>(
         }
     }
 
-    fun size(dimension: Int): Int = edges[dimension]
+    fun sizeInDimension(dimension: Int): Int =
+        if (dimension in 1 .. dimensions) {
+            edges[dimension - 1]
+        } else throw IndexOutOfBoundsException()
 
     fun transform(mask: Map<Int, T>): Tiles<T> =
         copy(
