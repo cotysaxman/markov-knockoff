@@ -2,14 +2,14 @@ import androidx.compose.ui.graphics.Color
 
 sealed class Rule<T> {
     abstract fun findMatches(
-        searchIn: Tiles<T>
+        searchIn: NDimensionalCollection<T>
     ): List<Pair<List<Int>, List<T>>>?
 
     abstract fun toString(charMap: Map<Char, T>): String
 
     data class Single<T>(private val rule: Pair<List<T>, List<T>>): Rule<T>() {
         override fun findMatches(
-            searchIn: Tiles<T>
+            searchIn: NDimensionalCollection<T>
         ): List<Pair<List<Int>, List<T>>>? =
             rule.let { (searchFor, replaceWith) ->
                 val matchingIndexLists = searchIn.find(searchFor)
@@ -32,7 +32,7 @@ sealed class Rule<T> {
 
     data class Composite<T>(private val rules: List<Rule<T>>): Rule<T>() {
         override fun findMatches(
-            searchIn: Tiles<T>
+            searchIn: NDimensionalCollection<T>
         ): List<Pair<List<Int>, List<T>>>? =
             rules.flatMap { rule ->
                 rule.findMatches(searchIn) ?: emptyList()
@@ -50,7 +50,7 @@ sealed class Rule<T> {
         private val rule: Rule<T>
     ): Rule<T>() {
         override fun findMatches(
-            searchIn: Tiles<T>
+            searchIn: NDimensionalCollection<T>
         ): List<Pair<List<Int>, List<T>>>? {
             if (times == 0) {
                 return null
@@ -69,7 +69,7 @@ sealed class Rule<T> {
         private var passedIndices = 0
 
         override fun findMatches(
-            searchIn: Tiles<T>
+            searchIn: NDimensionalCollection<T>
         ): List<Pair<List<Int>, List<T>>>? {
             val (results, index) = rules.drop(passedIndices).asSequence().mapIndexedNotNull { index, rule ->
                 val matches = rule.findMatches(searchIn)
@@ -94,7 +94,7 @@ sealed class Rule<T> {
 
     data class Markov<T>(private val rules: List<Rule<T>>) : Rule<T>() {
         override fun findMatches(
-            searchIn: Tiles<T>
+            searchIn: NDimensionalCollection<T>
         ): List<Pair<List<Int>, List<T>>>? = rules.asSequence().mapNotNull { rule ->
             rule.findMatches(searchIn)
                 ?.takeIf { it.isNotEmpty() }
@@ -109,7 +109,7 @@ sealed class Rule<T> {
 
 sealed class Rules<T> {
     fun createTransform(
-        searchIn: Tiles<T>
+        searchIn: NDimensionalCollection<T>
     ): Map<Int, T>? {
         val matches = ruleList.asSequence().mapNotNull { rule ->
             rule.findMatches(searchIn)
@@ -168,6 +168,7 @@ sealed class Rules<T> {
                                 else -> throw InvalidRuleDefinition()
                             }
                         }
+                    @Suppress("UNCHECKED_CAST")
                     return@map nodeConstructor(nodeContents as List<Rule<T>>)
                 }.toList()
     }

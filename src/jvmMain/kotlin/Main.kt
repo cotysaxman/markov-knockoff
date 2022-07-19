@@ -19,12 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.delay
-import kotlin.math.sqrt
 
 @Composable
 @Preview
 fun App(
-    data: Tiles<Color>,
+    data: NDimensionalCollection<Color>,
     rules: Rules.Colors,
     isPlaying: Boolean,
     playPause: () -> Unit,
@@ -80,26 +79,23 @@ fun App(
                 Text(ruleString)
             }
         }
-        BoxWithConstraints(
+        Box(
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 verticalArrangement = Arrangement.Center
             ) {
-                val (tileWidth, tileHeight) = with (this@BoxWithConstraints) {
-                    val heightScalar = 1f / data.sizeInDimension(1)
-                    val widthScalar = 1f / data.sizeInDimension(2)
-
-                    (maxWidth * widthScalar) to (maxHeight * heightScalar)
-                }
                 data.forEach { row ->
                     Row(
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         row.forEach { item ->
                             Spacer(modifier = Modifier
-                                .size(width = tileWidth, height = tileHeight)
-                                .background(color = item.value))
+                                .padding(1.dp)
+                                .size(width = 26.dp, height = 14.dp)
+                                .background(color = item.value)
+                            )
                         }
                     }
                 }
@@ -118,6 +114,7 @@ fun main() = application {
         )
     }
 
+    @Suppress("UNUSED_VARIABLE")
     val animationLoop = LaunchedEffect(Unit) {
         while(true) {
             delay(1)
@@ -143,15 +140,6 @@ fun main() = application {
     }
 }
 
-fun <T> List<T>.addDimension(): List<List<T>> {
-    val size = sqrt(size.toDouble()).toInt()
-    return List(size) { y ->
-        List(size) { x ->
-            this[y * size + x]
-        }
-    }
-}
-
 val initialRules = Rules.Colors.fromString("""
     !
     B > W * 1
@@ -166,7 +154,7 @@ val initialRules = Rules.Colors.fromString("""
 """.trimIndent()
 )
 
-val initialData = Tiles(
+val initialData = NDimensionalCollection(
     Black,
-    listOf(32, 32)
+    listOf(20, 16)
 )
