@@ -122,6 +122,7 @@ fun main() = application {
         while(true) {
             delay(1)
             if (!isPlaying) {
+                delay(250)
                 continue
             }
             data = transformer.nextFrame(data)
