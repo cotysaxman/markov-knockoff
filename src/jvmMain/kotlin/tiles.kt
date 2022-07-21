@@ -157,10 +157,10 @@ data class NDimensionalCollection<T>(
 
     companion object {
         fun coordinatesForIndex(index: Int, edges: List<Int>): List<Int> =
-            edges.fold(emptyList<Int>() to 1) { accumulated, nextEdge ->
+            edges.reversed().fold(emptyList<Int>() to 1) { accumulated, nextEdge ->
                 (accumulated.first + ((index / accumulated.second) % nextEdge)) to
                         accumulated.second * nextEdge
-            }.first
+            }.first.reversed()
 
         fun indexFromCoordinates(coordinates: List<Int>, edges: List<Int>): Int? {
             edges.zip(coordinates) { edgeLength, coordinate ->
