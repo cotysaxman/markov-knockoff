@@ -1,6 +1,6 @@
 data class NDimensionalCollection<T>(
     private val data: List<T>,
-    private val edges: List<Int> = listOf(data.size)
+    val edges: List<Int> = listOf(data.size)
 ): Sequence<NDimensionalCollection<T>> {
     constructor(
         default: T,
@@ -23,21 +23,27 @@ data class NDimensionalCollection<T>(
 
             else -> {
                 val thisEdge = edges[0]
-                val remainingDimension = edges.drop(1).reduce(Int::times)
+                val otherEdges = edges.drop(1)
+                val remainingDimension = otherEdges.reduce(Int::times)
                 (0 until thisEdge).map { index ->
                     val dataSegment = data.subList(
                         fromIndex = index * remainingDimension,
                         toIndex = (index + 1) * remainingDimension
                     ).toList()
-                    NDimensionalCollection(dataSegment, edges.drop(1))
+                    NDimensionalCollection(dataSegment, otherEdges)
                 }.iterator()
             }
         }
     }
 
+    fun flattenedSequence(): Sequence<T> = sequence {
+        data.asSequence().forEach { yield(it) }
+    }
+
     private fun indexedSequence(): Sequence<Pair<List<Int>, T>> = sequence {
-        data.asSequence().forEachIndexed { index, entry ->
-            yield(coordinatesForIndex(index, edges) to entry)
+        val iterator = data.iterator()
+        edges.map { (0 until it).toList() }.cartesianFold().forEach { coordinateList ->
+            yield(coordinateList to iterator.next())
         }
     }
 
@@ -53,11 +59,6 @@ data class NDimensionalCollection<T>(
             }
         )
 
-    fun find(
-        subList: List<T>
-    ): List<List<Int>> =
-        find(NDimensionalCollection(subList))
-
     private fun remapDimensions(
         dimensionMapping: List<Vector>
     ): List<Pair<NDimensionalCollection<T>, Map<Int, Int>>> {
@@ -65,33 +66,30 @@ data class NDimensionalCollection<T>(
             sizeInDimension(it.dimension)
         }
 
-        val unclaimedEdges = edges.filterIndexed { index, _ ->
-            index + 1 !in dimensionMapping.map(Vector::dimension)
+        val unclaimedDimensions = (1 .. dimensions).filter { dimension ->
+            dimension !in dimensionMapping.map(Vector::dimension)
         }
-        val numberOfResults = unclaimedEdges.fold(1, Int::times)
-        val unclaimedCoordinateLists = unclaimedEdges.map { edgeLength ->
+        val numberOfResults = unclaimedDimensions.map(::sizeInDimension).fold(1, Int::times)
+        val unclaimedCoordinateLists = unclaimedDimensions.map(::sizeInDimension).map { edgeLength ->
             (0 until edgeLength).toList()
         }.cartesianFold()
 
-        val unusedDimensionIterator = unclaimedEdges.indices.iterator()
-        val completeDimensionMap = (1 .. dimensions).associate { localDimension ->
-            val mappedIndex = dimensionMapping.indexOfFirst { it.dimension == localDimension }
-            if (mappedIndex >= 0) {
-                return@associate localDimension to mappedIndex
-            }
-            val fallbackIndex = unusedDimensionIterator.nextInt()
-            return@associate localDimension to fallbackIndex + dimensionMapping.size
-        }
+        val completeDimensionMap = dimensionMapping.map(Vector::dimension) + unclaimedDimensions
+        val destinationIndices = newEdges.map { edgeLength ->
+            (0 until edgeLength).toList()
+        }.cartesianFold()
 
         return List(numberOfResults) { resultIndex ->
             val keyMap = mutableMapOf<Int, Int>()
+            @Suppress("UNCHECKED_CAST")
             NDimensionalCollection(
-                data = newEdges.reversed().map { edgeLength ->
-                    (0 until edgeLength).toList()
-                }.cartesianFold().mapIndexed { index, partialCoordinateList ->
-                    val compositeCombinedCoordinates = partialCoordinateList + unclaimedCoordinateLists[resultIndex]
+                data = destinationIndices.mapIndexedNotNull { index, partialCoordinateList ->
+                    val compositeCombinedCoordinates = when (unclaimedDimensions.size) {
+                        0 -> partialCoordinateList
+                        else -> partialCoordinateList + unclaimedCoordinateLists[resultIndex]
+                    }
                     val localizedDirectionlessCoordinates = (1 .. dimensions).map { localDimension ->
-                        compositeCombinedCoordinates[completeDimensionMap[localDimension]!!]
+                        compositeCombinedCoordinates[completeDimensionMap[localDimension - 1] - 1]
                     }
                     val directionalScalars = (1 .. dimensions).map { localDimension ->
                         dimensionMapping.firstOrNull {
@@ -102,18 +100,18 @@ data class NDimensionalCollection<T>(
                         localizedDirectionlessCoordinates,
                         edges,
                         directionalScalars
-                    ).reversed()
-                    val localIndex = unCheckedIndexFromCoordinates(localizedCoordinates, edges)
+                    )
+                    val localIndex = indexFromCoordinates(localizedCoordinates, edges) ?: return@mapIndexedNotNull null
                     keyMap[index] = localIndex
 
                     data[localIndex]
                 },
                 edges = newEdges
-            ) to keyMap.toMap()
+            ) as NDimensionalCollection<T> to keyMap.toMap()
         }
     }
 
-    private fun find(
+    fun find(
         other: NDimensionalCollection<T>
     ): List<List<Int>> {
         val dimensionMappings = (1 .. dimensions)
@@ -135,7 +133,7 @@ data class NDimensionalCollection<T>(
     private fun match(
         other: NDimensionalCollection<T>
     ): List<List<Int>> =
-        indexedSequence().map { it.first }.mapNotNull { coordinates ->
+        indexedSequence().mapNotNull { (coordinates, _) ->
             other.indexedSequence().toList().map { (otherCoordinates, otherEntry) ->
                 val offsetCoordinates = otherCoordinates.zip(coordinates, Int::plus)
                 val localIndex = indexFromCoordinates(offsetCoordinates, edges) ?: return@mapNotNull null
@@ -158,15 +156,14 @@ data class NDimensionalCollection<T>(
     }
 
     companion object {
-        private fun coordinatesForIndex(index: Int, edges: List<Int>): List<Int> =
-            edges.reversed()
-                .fold(emptyList<Int>() to 1) { accumulated, nextEdge ->
-                    (accumulated.first + ((index / accumulated.second) % nextEdge)) to
-                            accumulated.second * nextEdge
-                }.first
+        fun coordinatesForIndex(index: Int, edges: List<Int>): List<Int> =
+            edges.fold(emptyList<Int>() to 1) { accumulated, nextEdge ->
+                (accumulated.first + ((index / accumulated.second) % nextEdge)) to
+                        accumulated.second * nextEdge
+            }.first
 
-        private fun indexFromCoordinates(coordinates: List<Int>, edges: List<Int>): Int? {
-            edges.reversed().zip(coordinates) { edgeLength, coordinate ->
+        fun indexFromCoordinates(coordinates: List<Int>, edges: List<Int>): Int? {
+            edges.zip(coordinates) { edgeLength, coordinate ->
                 if (coordinate >= edgeLength) {
                     return null
                 }
@@ -175,13 +172,16 @@ data class NDimensionalCollection<T>(
         }
 
         private fun unCheckedIndexFromCoordinates(coordinates: List<Int>, edges: List<Int>) =
-            coordinates.zip(
+            coordinates.reversed().zip(
                 edges.reversed().runningFold(1, Int::times),
                 Int::times
             ).reduce(Int::plus)
 
-        private fun applyScalars(coordinates: List<Int>, edges: List<Int>, scalars: List<Int>) =
-            coordinates.zip(edges).zip(scalars).map { (tuple, scalar) ->
+        fun applyScalars(
+            coordinates: List<Int>,
+            edges: List<Int>,
+            scalars: List<Int>
+        ) = coordinates.zip(edges).zip(scalars).map { (tuple, scalar) ->
                 val (coordinateComponent, edgeLength) = tuple
 
                 when (scalar) {
@@ -202,11 +202,11 @@ private fun <T> Iterable<T>.choose(number: Int): List<List<T>> =
         }
     }
 
-private fun <T> List<List<T>>.cartesianFold() =
-    fold<List<T>, List<List<T>>?>(null) { accumulated, next ->
-        next.map { newCoordinateComponent ->
-            accumulated?.flatMap { existingCoordinateComponents ->
-                existingCoordinateComponents + newCoordinateComponent
-            } ?: listOf(newCoordinateComponent)
-        }
-    }.orEmpty()
+private fun <T> List<List<T>>.cartesianFold(): List<List<T>> =
+    fold(emptyList()) { accumulated, next ->
+        accumulated.flatMap { oldOnes ->
+            next.map { newOne ->
+                oldOnes + newOne
+            }
+        }.takeIf(List<List<T>>::isNotEmpty) ?: next.map(::listOf)
+    }

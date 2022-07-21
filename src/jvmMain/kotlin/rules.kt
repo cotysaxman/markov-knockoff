@@ -3,14 +3,14 @@ import androidx.compose.ui.graphics.Color
 sealed class Rule<T> {
     abstract fun findMatches(
         searchIn: NDimensionalCollection<T>
-    ): List<Pair<List<Int>, List<T>>>?
+    ): List<Pair<List<Int>, NDimensionalCollection<T>>>?
 
     abstract fun toString(charMap: Map<Char, T>): String
 
-    data class Single<T>(private val rule: Pair<List<T>, List<T>>): Rule<T>() {
+    data class Single<T>(private val rule: Pair<NDimensionalCollection<T>, NDimensionalCollection<T>>): Rule<T>() {
         override fun findMatches(
             searchIn: NDimensionalCollection<T>
-        ): List<Pair<List<Int>, List<T>>>? =
+        ): List<Pair<List<Int>, NDimensionalCollection<T>>>? =
             rule.let { (searchFor, replaceWith) ->
                 val matchingIndexLists = searchIn.find(searchFor)
                 if (matchingIndexLists.isEmpty()) {
@@ -21,19 +21,37 @@ sealed class Rule<T> {
             }
 
         override fun toString(charMap: Map<Char, T>): String =
-            rule.toList().joinToString(" > ") { ruleClause ->
-                ruleClause.map { element ->
-                    charMap.keys.firstOrNull { keyChar ->
-                        charMap[keyChar] == element
-                    } ?: throw InvalidRuleDefinition()
-                }.joinToString("")
+            rule.toList().joinToString(" > ") { nDimensionalCollection ->
+                val data = nDimensionalCollection.flattenedSequence().toList()
+                val edges = nDimensionalCollection.edges
+                val data2d = when (nDimensionalCollection.edges.size) {
+                    1 -> listOf(data)
+                    else -> {
+                        val thisEdge = edges[0]
+                        val otherEdges = edges.drop(1)
+                        val remainingDimension = otherEdges.reduce(Int::times)
+                        (0 until thisEdge).map { index ->
+                            data.subList(
+                                fromIndex = index * remainingDimension,
+                                toIndex = (index + 1) * remainingDimension
+                            ).toList()
+                        }
+                    }
+                }
+                data2d.joinToString(" ^ ") { chunk ->
+                    chunk.map { element ->
+                        charMap.keys.firstOrNull { keyChar ->
+                            charMap[keyChar] == element
+                        } ?: throw InvalidRuleDefinition()
+                    }.joinToString("")
+                }
             }
     }
 
     data class Composite<T>(private val rules: List<Rule<T>>): Rule<T>() {
         override fun findMatches(
             searchIn: NDimensionalCollection<T>
-        ): List<Pair<List<Int>, List<T>>>? =
+        ): List<Pair<List<Int>, NDimensionalCollection<T>>>? =
             rules.flatMap { rule ->
                 rule.findMatches(searchIn) ?: emptyList()
             }.takeIf { it.isNotEmpty() }
@@ -46,19 +64,20 @@ sealed class Rule<T> {
     }
 
     data class Limited<T>(
-        private var times: Int,
+        private val times: Int,
         private val rule: Rule<T>
     ): Rule<T>() {
+        private var timesSelected = 0
         override fun findMatches(
             searchIn: NDimensionalCollection<T>
-        ): List<Pair<List<Int>, List<T>>>? {
-            if (times == 0) {
+        ): List<Pair<List<Int>, NDimensionalCollection<T>>>? {
+            if (timesSelected >= times) {
                 return null
             }
             val results = rule.findMatches(searchIn)
                 ?.takeIf { it.isNotEmpty() } ?: return null
 
-            times -= 1
+            timesSelected += 1
             return results
         }
 
@@ -70,7 +89,7 @@ sealed class Rule<T> {
 
         override fun findMatches(
             searchIn: NDimensionalCollection<T>
-        ): List<Pair<List<Int>, List<T>>>? {
+        ): List<Pair<List<Int>, NDimensionalCollection<T>>>? {
             val (results, index) = rules.drop(passedIndices).asSequence().mapIndexedNotNull { index, rule ->
                 val matches = rule.findMatches(searchIn)
                     ?.takeIf { it.isNotEmpty() } ?: return@mapIndexedNotNull null
@@ -95,7 +114,7 @@ sealed class Rule<T> {
     data class Markov<T>(private val rules: List<Rule<T>>) : Rule<T>() {
         override fun findMatches(
             searchIn: NDimensionalCollection<T>
-        ): List<Pair<List<Int>, List<T>>>? = rules.asSequence().mapNotNull { rule ->
+        ): List<Pair<List<Int>, NDimensionalCollection<T>>>? = rules.asSequence().mapNotNull { rule ->
             rule.findMatches(searchIn)
                 ?.takeIf { it.isNotEmpty() }
         }.firstOrNull()
@@ -117,8 +136,9 @@ sealed class Rules<T> {
             ?: return null
 
         return matches.random().let { (candidateIndexList, replacementItems) ->
-            candidateIndexList.mapIndexed { position, dataIndex ->
-                dataIndex to replacementItems[position]
+            val replacements = replacementItems.flattenedSequence().toList()
+            candidateIndexList.mapIndexed { index, dataIndex ->
+                dataIndex to replacements[index]
             }.toMap()
         }
     }
@@ -147,10 +167,18 @@ sealed class Rules<T> {
                             val singleRules = timesSplit[0].split('|')
                                 .map { ruleComponents ->
                                     ruleComponents.split('>')
-                                        .map { ruleClause ->
-                                            ruleClause.trim().map { rawCharacter ->
+                                        .map { clauses ->
+                                            val components = clauses.trim().split('^').map(String::trim)
+                                            components.joinToString("") to
+                                                    listOfNotNull(
+                                                        components.first().length,
+                                                        components.size.takeIf { it > 1 },
+                                                    )
+                                        }.map { (rawData, edges) ->
+                                            val parsedData = rawData.map { rawCharacter ->
                                                 parseMap[rawCharacter] ?: throw InvalidRuleDefinition()
                                             }
+                                            NDimensionalCollection(parsedData, edges)
                                         }.let { (lhv, rhv) ->
                                             Rule.Single(lhv to rhv)
                                         }
