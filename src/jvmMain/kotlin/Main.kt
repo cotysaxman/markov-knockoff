@@ -35,8 +35,8 @@ fun App(
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                val ruleString = rules.toString()
-                var pendingRules by remember { mutableStateOf(ruleString) }
+                val ruleString = rules.toAnnotatedString()
+                var pendingRules by remember { mutableStateOf(rules.toString()) }
                 var selectedRule by remember {
                     mutableStateOf(ColorScripts.byRules(rules)?.name ?: "Custom")
                 }
@@ -117,8 +117,8 @@ fun App(
                         )
                     }
                 }
-                Text(ruleString)
-                Text(inspectedTileString)
+                Text(text = ruleString, modifier = Modifier.background(Color.LightGray))
+                Text(text = inspectedTileString, modifier = Modifier.background(Color.LightGray))
             }
         }
         Box(

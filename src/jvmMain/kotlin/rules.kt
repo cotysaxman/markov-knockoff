@@ -1,4 +1,7 @@
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 
 sealed class Rule<T> {
     abstract fun findMatches(
@@ -202,6 +205,19 @@ sealed class Rules<T> {
     }
 
     data class Colors(override val ruleList: List<Rule<Color>>) : Rules<Color>() {
+        fun toAnnotatedString() = buildAnnotatedString {
+            this@Colors.toString().forEach { character ->
+                val color = parseMap[character] ?: run {
+                    append(character)
+                    return@forEach
+                }
+
+                withStyle(
+                    style = SpanStyle(color = color)
+                ) { append(character) }
+            }
+        }
+
         override fun toString(): String =
             ruleList.joinToString("\n") { rule ->
                 rule.toString(parseMap)
