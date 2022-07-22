@@ -33,6 +33,14 @@ enum class ColorScripts(
             RB^BB > RB^BR
         """.trimIndent())
     ),
+    MAZE_BACK_TRACKER(
+        Rules.Colors.fromString("""
+            ?
+            B > R * 1
+            RBB > GGR
+            RGG > WWR
+        """.trimIndent())
+    )
     ;
 
     fun copy(): Rules.Colors = rules.copy()
