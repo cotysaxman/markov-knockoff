@@ -2,48 +2,38 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import ui.Controls
 import ui.Display
+import ui.rememberAppState
 
 @Composable
 @Preview
-fun App(
-    data: NDimensionalCollection<Color>,
-    ruleSet: RuleSet<Color>,
-    submitNewRules: (RuleSet<Color>) -> Unit,
-    callFrame: () -> Unit
-) {
-    var appState by remember { mutableStateOf(AppState(false)) }
+fun App() {
+    val appState = rememberAppState()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(10.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        var inspectedTileString by remember { mutableStateOf("") }
         Controls(
-            { ruleSet },
-            submitNewRules,
-            { appState = AppState(!appState.isPlaying) },
-            { appState.isPlaying },
-            { inspectedTileString }
+            appState::rules,
+            appState::updateRules,
+            appState::toggleIsPlaying,
+            appState::playing,
+            appState::debugString
         )
         Display(
-            { data },
-            reportTileInspection =  { inspectedTileString = it }
+            appState::tileData,
+            appState::updateDebugString
         )
     }
 
-    if (appState.isPlaying) {
-        LaunchedEffect(data) {
+    if (appState.playing) {
+        LaunchedEffect(appState) {
             delay(1)
-            callFrame()
+            appState.advanceFrame()
         }
     }
 }
-
-data class AppState(
-    val isPlaying: Boolean
-)
