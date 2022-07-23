@@ -20,8 +20,8 @@ fun CanvasGrid(
     val (height, width) = dataEdgesProvider().let { edges ->
         edges[0] to edges[1]
     }
-    val tileWidth = 6
-    val tileHeight = 4
+    val tileWidth = 10
+    val tileHeight = 8
     val padding = 1
 
     Canvas(

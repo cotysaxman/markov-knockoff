@@ -31,7 +31,7 @@ fun App() {
         )
     }
 
-    LaunchedEffect(appState::playing) {
+    LaunchedEffect(appState.key) {
         if (appState.playing) {
             delay(1)
             appState.advanceFrame()

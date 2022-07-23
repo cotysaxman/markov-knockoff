@@ -18,16 +18,27 @@ fun rememberAppState(): AppState {
 }
 
 class AppState private constructor(
+    val key: Int = 0,
     private val state: StateData,
     private val onTransitionProvider: () -> (AppState) -> Unit
 ) {
+    private fun transitionTo(nextData: StateData) {
+        onTransitionProvider()(
+            AppState(
+                key = key + 1,
+                state = nextData,
+                onTransitionProvider = onTransitionProvider
+            )
+        )
+    }
+
     val playing: Boolean
         get() = state.isPlaying
     fun toggleIsPlaying() {
         val nextState = state.copy(
             isPlaying = !state.isPlaying
         )
-        onTransitionProvider()(AppState(nextState, onTransitionProvider))
+        transitionTo(nextState)
     }
 
     fun tileAt2dIndex(y: Int, x: Int): Color =
@@ -36,10 +47,17 @@ class AppState private constructor(
         get() = state.data.edges
 
     fun advanceFrame() {
-        val nextState = state.copy(
-            data = state.ruleSet.nextFrame(state.data)
-        )
-        onTransitionProvider()(AppState(nextState, onTransitionProvider))
+        val nextState = state.ruleSet.nextFrame(state.data)
+            .takeIf { it != state.data }
+            ?.let{ newFrame ->
+                state.copy(
+                    data = newFrame
+                )
+            } ?: state.copy(
+                isPlaying = false
+            )
+
+        transitionTo(nextState)
     }
 
     val rules: RuleSet<Color>
@@ -48,7 +66,7 @@ class AppState private constructor(
         val nextState = StateData.DEFAULT_INSTANCE.copy(
             ruleSet = newRules
         )
-        onTransitionProvider()(AppState(nextState, onTransitionProvider))
+        transitionTo(nextState)
     }
 
     val debugString: String
@@ -57,12 +75,12 @@ class AppState private constructor(
         val nextState = state.copy(
             debugString = newString
         )
-        onTransitionProvider()(AppState(nextState, onTransitionProvider))
+        transitionTo(nextState)
     }
 
     companion object {
         fun instance(onTransitionProvider: () -> (AppState) -> Unit) =
-            AppState(StateData.DEFAULT_INSTANCE, onTransitionProvider)
+            AppState(0, StateData.DEFAULT_INSTANCE, onTransitionProvider)
     }
 }
 
@@ -75,7 +93,7 @@ private data class StateData(
 ) {
     companion object {
         private val DEFAULT_TILE = Color.Black
-        private val DEFAULT_EDGES = listOf(80, 100)
+        private val DEFAULT_EDGES = listOf(32, 60)
         private val DEFAULT_RULES = ColorScripts.MAZE_BACK_TRACKER.copy()
         private const val DEFAULT_IS_PLAYING = false
         private const val DEFAULT_DEBUG_STRING = ""
