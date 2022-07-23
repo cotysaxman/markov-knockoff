@@ -29,8 +29,10 @@ class AppState private constructor(
         onTransitionProvider()(AppState(nextState, onTransitionProvider))
     }
 
-    val tileData: NDimensionalCollection<Color>
-        get() = state.data
+    fun tileAt2dIndex(y: Int, x: Int): Color =
+        state.data[y, x]
+    val dataShape: List<Int>
+        get() = state.data.edges
     fun advanceFrame() {
         val nextState = state.copy(
             data = state.ruleSet.nextFrame(state.data)

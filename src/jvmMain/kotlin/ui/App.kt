@@ -25,7 +25,8 @@ fun App() {
             appState::debugString
         )
         Display(
-            appState::tileData,
+            appState::tileAt2dIndex,
+            appState::dataShape,
             appState::updateDebugString
         )
     }

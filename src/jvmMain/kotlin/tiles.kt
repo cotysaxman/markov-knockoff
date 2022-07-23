@@ -36,6 +36,12 @@ data class NDimensionalCollection<T>(
         }
     }
 
+    operator fun get(vararg indices: Int): T {
+        val localIndex = indexFromCoordinates(indices.asList(), edges)
+            ?: throw IndexOutOfBoundsException()
+        return data[localIndex]
+    }
+
     fun flattenedSequence(): Sequence<T> = sequence {
         data.asSequence().forEach { yield(it) }
     }
@@ -156,12 +162,6 @@ data class NDimensionalCollection<T>(
     }
 
     companion object {
-        fun coordinatesForIndex(index: Int, edges: List<Int>): List<Int> =
-            edges.reversed().fold(emptyList<Int>() to 1) { accumulated, nextEdge ->
-                (accumulated.first + ((index / accumulated.second) % nextEdge)) to
-                        accumulated.second * nextEdge
-            }.first.reversed()
-
         fun indexFromCoordinates(coordinates: List<Int>, edges: List<Int>): Int? {
             edges.zip(coordinates) { edgeLength, coordinate ->
                 if (coordinate >= edgeLength) {
