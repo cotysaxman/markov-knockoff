@@ -30,47 +30,17 @@ fun Controls(
         ) {
             val ruleString = rules.toAnnotatedString()
             var pendingRules by remember { mutableStateOf(rules.toString()) }
-            var selectedRule by remember {
-                mutableStateOf(ColorScripts.byRules(rules)?.name ?: "Custom")
-            }
 
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                var expandedDropdown by remember { mutableStateOf(false) }
-                val dropdownIcon = if (expandedDropdown) {
-                    Icons.Filled.KeyboardArrowUp
-                } else {
-                    Icons.Filled.KeyboardArrowDown
-                }
-                OutlinedTextField(
-                    value = selectedRule,
-                    onValueChange = { selectedRule = it },
-                    label = { Text("Select pre-made script") },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = dropdownIcon,
-                            contentDescription = dropdownIcon.name,
-                            modifier = Modifier.clickable { expandedDropdown = !expandedDropdown }
-                        )
-                    },
-                    readOnly = true
+                DropdownTextField(
+                    defaultValue = "Custom",
+                    options = ColorScripts.values().asList(),
+                    isSelected = { ColorScripts.byRules(rules) == it },
+                    displayName = { it.name },
+                    onSelected = { pendingRules = it.copy().toString() }
                 )
-                DropdownMenu(
-                    expanded = expandedDropdown,
-                    onDismissRequest = { expandedDropdown = false },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ColorScripts.values().forEach { script ->
-                        DropdownMenuItem(onClick = {
-                            pendingRules = script.copy().toString()
-                            selectedRule = script.name
-                            expandedDropdown = false
-                        }) {
-                            Text(script.name)
-                        }
-                    }
-                }
                 TextField(
                     value = pendingRules,
                     onValueChange = { pendingRules = it },
@@ -83,7 +53,6 @@ fun Controls(
                 Button(
                     onClick = {
                         val newRules = Rules.Colors.fromString(pendingRules)
-                        selectedRule = ColorScripts.byRules(newRules)?.name ?: "Custom"
                         submitNewRules(newRules)
                     }
                 ) {
@@ -112,6 +81,60 @@ fun Controls(
             }
             Text(text = ruleString, modifier = Modifier.background(Color.LightGray))
             Text(text = inspectedTileString, modifier = Modifier.background(Color.LightGray))
+        }
+    }
+}
+
+@Composable
+private fun <T> DropdownTextField(
+    @Suppress("SameParameterValue")
+    defaultValue: String = "",
+    options: Collection<T>,
+    isSelected: (T) -> Boolean,
+    displayName: (T) -> String,
+    onSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val dropdownIcon = if (expanded) {
+        Icons.Filled.KeyboardArrowUp
+    } else {
+        Icons.Filled.KeyboardArrowDown
+    }
+
+    val initialSelection = options.firstOrNull { isSelected(it) }?.let { currentSelection ->
+        displayName(currentSelection)
+    } ?: defaultValue
+    var selectionText by remember {
+        mutableStateOf(initialSelection)
+    }
+
+    OutlinedTextField(
+        value = selectionText,
+        onValueChange = { selectionText = it },
+        label = { Text("Select pre-made script") },
+        trailingIcon = {
+            Icon(
+                imageVector = dropdownIcon,
+                contentDescription = dropdownIcon.name,
+                modifier = Modifier.clickable { expanded = !expanded }
+            )
+        },
+        readOnly = true
+    )
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        options.forEach { option ->
+            val name = displayName(option)
+            DropdownMenuItem(onClick = {
+                onSelected(option)
+                selectionText = name
+                expanded = false
+            }) {
+                Text(name)
+            }
         }
     }
 }
