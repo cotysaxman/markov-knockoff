@@ -28,7 +28,7 @@ fun App(
             submitNewRules,
             playPause,
             { isPlaying },
-            inspectedTileString
+            { inspectedTileString }
         )
         Display(
             data,

@@ -20,7 +20,7 @@ fun Controls(
     submitNewRules: (RuleSet<Color>) -> Unit,
     playPause: () -> Unit,
     isPlayingProvider: () -> Boolean,
-    inspectedTileString: String
+    inspectedTileStringProvider: () -> String
 ) {
     Box(
         modifier = Modifier.fillMaxWidth()
@@ -83,7 +83,7 @@ fun Controls(
                 }
             }
             Text(text = ruleString, modifier = Modifier.background(Color.LightGray))
-            Text(text = inspectedTileString, modifier = Modifier.background(Color.LightGray))
+            Text(text = inspectedTileStringProvider(), modifier = Modifier.background(Color.LightGray))
         }
     }
 }
