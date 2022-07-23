@@ -1,5 +1,6 @@
 package ui
 
+import ColorScripts
 import NDimensionalCollection
 import RuleSet
 import androidx.compose.runtime.*
@@ -33,6 +34,7 @@ class AppState private constructor(
         state.data[y, x]
     val dataShape: List<Int>
         get() = state.data.edges
+
     fun advanceFrame() {
         val nextState = state.copy(
             data = state.ruleSet.nextFrame(state.data)
@@ -74,7 +76,7 @@ private data class StateData(
     companion object {
         private val DEFAULT_TILE = Color.Black
         private val DEFAULT_EDGES = listOf(15, 15)
-        private val DEFAULT_RULES = ColorScripts.RIVER_VALLEY.copy()
+        private val DEFAULT_RULES = ColorScripts.MAZE_BACK_TRACKER.copy()
         private const val DEFAULT_IS_PLAYING = false
         private const val DEFAULT_DEBUG_STRING = ""
 
