@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Display(
-    data: NDimensionalCollection<Color>,
+    dataProvider: () -> NDimensionalCollection<Color>,
     reportTileInspection: (String) -> Unit
 ) {
     Box(
@@ -22,19 +22,19 @@ fun Display(
             .background(Color.LightGray),
         contentAlignment = Alignment.Center
     ) {
-        Grid(data, reportTileInspection)
+        Grid(dataProvider, reportTileInspection)
     }
 }
 
 @Composable
 private fun Grid(
-    data: NDimensionalCollection<Color>,
+    dataProvider: () -> NDimensionalCollection<Color>,
     reportTileInspection: (String) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.Center
     ) {
-        data.forEachIndexed { rowIndex, row ->
+        dataProvider().forEachIndexed { rowIndex, row ->
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -42,7 +42,7 @@ private fun Grid(
                     Tile(
                         rowIndex,
                         columnIndex,
-                        data,
+                        dataProvider(),
                         reportTileInspection,
                         item
                     )

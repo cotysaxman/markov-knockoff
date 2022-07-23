@@ -31,7 +31,7 @@ fun App(
             { inspectedTileString }
         )
         Display(
-            data,
+            { data },
             reportTileInspection =  { inspectedTileString = it }
         )
     }
