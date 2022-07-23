@@ -75,7 +75,7 @@ private data class StateData(
 ) {
     companion object {
         private val DEFAULT_TILE = Color.Black
-        private val DEFAULT_EDGES = listOf(15, 15)
+        private val DEFAULT_EDGES = listOf(80, 100)
         private val DEFAULT_RULES = ColorScripts.MAZE_BACK_TRACKER.copy()
         private const val DEFAULT_IS_PLAYING = false
         private const val DEFAULT_DEBUG_STRING = ""
