@@ -24,11 +24,13 @@ fun main() = application {
                 if (isPlaying) {
                     data = transformer.nextFrame(data)
                 }
-            }, submitNewRules = { newRules ->
+            },
+            submitNewRules = { newRules ->
                 currentRules = newRules
                 data = initialData
                 transformer = Engine(newRules)
-            }, callFrame = {
+            },
+            callFrame = {
                 data = transformer.nextFrame(data)
             }
         )

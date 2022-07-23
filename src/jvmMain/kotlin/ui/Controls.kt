@@ -1,7 +1,8 @@
 package ui
 
 import ColorScripts
-import Rules
+import RuleSet
+import RuleSetInterpreter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,8 +16,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Controls(
-    rules: Rules.Colors,
-    submitNewRules: (Rules.Colors) -> Unit,
+    ruleSet: RuleSet<Color>,
+    submitNewRules: (RuleSet<Color>) -> Unit,
     playPause: () -> Unit,
     isPlaying: Boolean,
     inspectedTileString: String
@@ -28,8 +29,10 @@ fun Controls(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val ruleString = rules.toAnnotatedString()
-            var pendingRules by remember { mutableStateOf(rules.toString()) }
+            val ruleString = RuleSetInterpreter.Colors.toAnnotatedString(ruleSet)
+            var pendingRules by remember {
+                mutableStateOf(RuleSetInterpreter.Colors.encodeToString(ruleSet))
+            }
 
             Column(
                 verticalArrangement = Arrangement.SpaceEvenly
@@ -37,9 +40,9 @@ fun Controls(
                 DropdownTextField(
                     defaultValue = "Custom",
                     options = ColorScripts.values().asList(),
-                    isSelected = { ColorScripts.byRules(rules) == it },
+                    currentSelectionProvider = { ColorScripts.byString(pendingRules) },
                     displayName = { it.name },
-                    onSelected = { pendingRules = it.copy().toString() }
+                    onSelected = { pendingRules = it.ruleString }
                 )
                 TextField(
                     value = pendingRules,
@@ -52,8 +55,8 @@ fun Controls(
             ) {
                 Button(
                     onClick = {
-                        val newRules = Rules.Colors.fromString(pendingRules)
-                        submitNewRules(newRules)
+                        val newRuleSet = RuleSetInterpreter.Colors.decodeRuleSetSafely(pendingRules)
+                        submitNewRules(newRuleSet)
                     }
                 ) {
                     Icon(
@@ -90,7 +93,7 @@ private fun <T> DropdownTextField(
     @Suppress("SameParameterValue")
     defaultValue: String = "",
     options: Collection<T>,
-    isSelected: (T) -> Boolean,
+    currentSelectionProvider: () -> T?,
     displayName: (T) -> String,
     onSelected: (T) -> Unit
 ) {
@@ -101,16 +104,13 @@ private fun <T> DropdownTextField(
         Icons.Filled.KeyboardArrowDown
     }
 
-    val initialSelection = options.firstOrNull { isSelected(it) }?.let { currentSelection ->
-        displayName(currentSelection)
+    var selectionText = currentSelectionProvider()?.let { selection ->
+        displayName(selection)
     } ?: defaultValue
-    var selectionText by remember {
-        mutableStateOf(initialSelection)
-    }
 
     OutlinedTextField(
         value = selectionText,
-        onValueChange = { selectionText = it },
+        onValueChange = {},
         label = { Text("Select pre-made script") },
         trailingIcon = {
             Icon(

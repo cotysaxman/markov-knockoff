@@ -12,10 +12,10 @@ import ui.Display
 @Preview
 fun App(
     data: NDimensionalCollection<Color>,
-    rules: Rules.Colors,
+    ruleSet: RuleSet<Color>,
     isPlaying: Boolean,
     playPause: () -> Unit,
-    submitNewRules: (Rules.Colors) -> Unit,
+    submitNewRules: (RuleSet<Color>) -> Unit,
     callFrame: () -> Unit
 ) {
     Column(
@@ -24,7 +24,7 @@ fun App(
     ) {
         var inspectedTileString by remember { mutableStateOf("") }
         Controls(
-            rules,
+            ruleSet,
             submitNewRules,
             playPause,
             isPlaying,
