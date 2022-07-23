@@ -24,7 +24,7 @@ fun App(
     ) {
         var inspectedTileString by remember { mutableStateOf("") }
         Controls(
-            ruleSet,
+            { ruleSet },
             submitNewRules,
             playPause,
             isPlaying,

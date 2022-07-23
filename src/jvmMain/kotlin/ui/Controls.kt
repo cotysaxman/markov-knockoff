@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Controls(
-    ruleSet: RuleSet<Color>,
+    ruleSetProvider: () -> RuleSet<Color>,
     submitNewRules: (RuleSet<Color>) -> Unit,
     playPause: () -> Unit,
     isPlaying: Boolean,
@@ -29,9 +29,9 @@ fun Controls(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val ruleString = RuleSetInterpreter.Colors.toAnnotatedString(ruleSet)
+            val ruleString = RuleSetInterpreter.Colors.toAnnotatedString(ruleSetProvider())
             var pendingRules by remember {
-                mutableStateOf(RuleSetInterpreter.Colors.encodeToString(ruleSet))
+                mutableStateOf(RuleSetInterpreter.Colors.encodeToString(ruleSetProvider()))
             }
 
             Column(
