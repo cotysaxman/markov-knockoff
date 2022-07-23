@@ -16,7 +16,10 @@ fun Display(
     reportTileInspection: (String) -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .background(Color.LightGray),
         contentAlignment = Alignment.Center
     ) {
         Grid(data, reportTileInspection)

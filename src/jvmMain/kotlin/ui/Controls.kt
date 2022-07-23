@@ -21,7 +21,10 @@ fun Controls(
     isPlaying: Boolean,
     inspectedTileString: String
 ) {
-    Box {
+    Box(
+        modifier = Modifier.fillMaxWidth()
+            .background(Color.Gray)
+    ) {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
