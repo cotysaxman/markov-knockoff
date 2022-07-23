@@ -26,6 +26,8 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(compose.uiTooling)
+                implementation(compose.preview)
                 implementation(compose.materialIconsExtended)
             }
         }
