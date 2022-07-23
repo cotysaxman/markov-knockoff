@@ -13,11 +13,11 @@ import ui.Display
 fun App(
     data: NDimensionalCollection<Color>,
     ruleSet: RuleSet<Color>,
-    isPlaying: Boolean,
-    playPause: () -> Unit,
     submitNewRules: (RuleSet<Color>) -> Unit,
     callFrame: () -> Unit
 ) {
+    var appState by remember { mutableStateOf(AppState(false)) }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(10.dp),
         verticalArrangement = Arrangement.Center
@@ -26,8 +26,8 @@ fun App(
         Controls(
             { ruleSet },
             submitNewRules,
-            playPause,
-            { isPlaying },
+            { appState = AppState(!appState.isPlaying) },
+            { appState.isPlaying },
             { inspectedTileString }
         )
         Display(
@@ -36,10 +36,14 @@ fun App(
         )
     }
 
-    if (isPlaying) {
+    if (appState.isPlaying) {
         LaunchedEffect(data) {
             delay(1)
             callFrame()
         }
     }
 }
+
+data class AppState(
+    val isPlaying: Boolean
+)

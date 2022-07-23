@@ -7,20 +7,12 @@ import androidx.compose.ui.window.application
 fun main() = application {
     var data by remember { mutableStateOf(initialData) }
     var currentRules by remember { mutableStateOf(initialRules) }
-    var isPlaying by remember { mutableStateOf(true) }
     val callFrame = { data = currentRules.nextFrame(data) }
 
     Window(onCloseRequest = ::exitApplication) {
         App(
             data,
             currentRules,
-            isPlaying,
-            playPause = {
-                isPlaying = !isPlaying
-                if (isPlaying) {
-                    callFrame()
-                }
-            },
             submitNewRules = { newRules ->
                 currentRules = newRules
                 data = initialData
