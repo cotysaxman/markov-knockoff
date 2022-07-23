@@ -136,7 +136,15 @@ data class RuleSet<T>(
         rule.toString(encodingMap)
     }
 
-    fun createTransform(
+    fun nextFrame(
+        currentFrame: NDimensionalCollection<T>
+    ): NDimensionalCollection<T> {
+        val mask = createTransform(currentFrame) ?: return currentFrame
+
+        return currentFrame.transform(mask)
+    }
+
+    private fun createTransform(
         searchIn: NDimensionalCollection<T>
     ): Map<Int, T>? {
         val matches = ruleList.asSequence().mapNotNull { rule ->

@@ -8,11 +8,7 @@ fun main() = application {
     var data by remember { mutableStateOf(initialData) }
     var currentRules by remember { mutableStateOf(initialRules) }
     var isPlaying by remember { mutableStateOf(true) }
-    var transformer by remember {
-        mutableStateOf(
-            Engine(currentRules)
-        )
-    }
+    val callFrame = { data = currentRules.nextFrame(data) }
 
     Window(onCloseRequest = ::exitApplication) {
         App(
@@ -22,17 +18,14 @@ fun main() = application {
             playPause = {
                 isPlaying = !isPlaying
                 if (isPlaying) {
-                    data = transformer.nextFrame(data)
+                    callFrame()
                 }
             },
             submitNewRules = { newRules ->
                 currentRules = newRules
                 data = initialData
-                transformer = Engine(newRules)
             },
-            callFrame = {
-                data = transformer.nextFrame(data)
-            }
+            callFrame = callFrame
         )
     }
 }
