@@ -19,7 +19,7 @@ fun Controls(
     ruleSetProvider: () -> RuleSet<Color>,
     submitNewRules: (RuleSet<Color>) -> Unit,
     playPause: () -> Unit,
-    isPlaying: Boolean,
+    isPlayingProvider: () -> Boolean,
     inspectedTileString: String
 ) {
     Box(
@@ -70,7 +70,7 @@ fun Controls(
                         playPause()
                     }
                 ) {
-                    val (vector, description) = when (isPlaying) {
+                    val (vector, description) = when (isPlayingProvider()) {
                         true -> Icons.Default.Pause
                         false -> Icons.Default.PlayArrow
                     }.let { it to it.name }

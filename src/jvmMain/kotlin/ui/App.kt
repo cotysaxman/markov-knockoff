@@ -27,7 +27,7 @@ fun App(
             { ruleSet },
             submitNewRules,
             playPause,
-            isPlaying,
+            { isPlaying },
             inspectedTileString
         )
         Display(
